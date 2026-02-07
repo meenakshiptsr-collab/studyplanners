@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Study Planner | Shivansh Studios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #ffffff;
+            --bg: #f3f0ed;
+            --accent: #d4a373;
+            --mint: #e8f3f1;
+            --rose: #f9ecec;
+            --lilac: #f3eff5;
+            --handwriting: 'Caveat', cursive;
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s ease; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background-color: var(--bg); font-family: 'Outfit', sans-serif; color: #555; overflow-x: hidden; }
+
+        /* --- SPLASH SCREEN --- */
+        #splash-screen {
+            position: fixed; inset: 0; background: white; z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .logo-circle {
+            width: 100px; height: 100px; background: var(--rose); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 20px;
+        }
+        .designer-tag { position: absolute; bottom: 40px; font-weight: 300; letter-spacing: 2px; color: #aaa; font-size: 0.7rem; }
+
+        /* --- ONBOARDING --- */
+        #onboarding {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1500;
+            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        .name-input {
+            border: none; border-bottom: 2px solid var(--accent); background: transparent;
+            font-size: 1.5rem; text-align: center; outline: none; padding: 10px; font-family: 'Outfit'; width: 80%;
+        }
+
+        /* --- HOME SCREEN --- */
+        #home-screen { display: none; padding: 20px; height: 100vh; overflow-y: auto; }
+        .greeting { font-size: 1.8rem; font-weight: 300; margin: 20px 0; text-align: center; }
+        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 30px; }
+        
+        /* Tablet/Desktop Grid */
+        @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .menu-card {
+            background: white; padding: 25px; border-radius: 20px; cursor: pointer;
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+        .menu-card h2 { font-weight: 400; font-size: 1.1rem; margin-top: 10px; }
+
+        /* --- PLANNER LAYOUT --- */
+        #planner-view { display: none; flex-direction: column; height: 100vh; }
+        
+        @media (min-width: 768px) { #planner-view { flex-direction: row; } }
+
+        nav {
+            width: 100%; background: white; display: flex; flex-direction: row;
+            justify-content: space-around; align-items: center; padding: 10px; 
+            border-bottom: 1px solid #e5e5e5; z-index: 100;
+        }
+        
+        @media (min-width: 768px) { 
+            nav { width: 80px; flex-direction: column; height: 100vh; border-right: 1px solid #e5e5e5; border-bottom: none; } 
+        }
+
+        .nav-icon {
+            width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; cursor: pointer; background: var(--bg);
+        }
+        .nav-icon.active { background: var(--accent); color: white; }
+
+        main { flex: 1; padding: 15px; overflow-y: auto; position: relative; background: var(--bg); }
+        
+        .planner-canvas {
+            max-width: 850px; margin: 0 auto; background: white; min-height: 100%;
+            padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        @media (min-width: 768px) { .planner-canvas { padding: 60px; border-radius: 5px; } }
+
+        /* --- RESPONSIVE GRID --- */
+        .planner-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .planner-grid { grid-template-columns: 1fr 2fr; gap: 40px; } }
+
+        .section-card { padding: 20px; border-radius: 18px; margin-bottom: 20px; }
+        .mint { background: var(--mint); } .rose { background: var(--rose); } .lilac { background: var(--lilac); }
+        
+        input, textarea { border: none; background: transparent; font-family: var(--handwriting); font-size: 1.3rem; outline: none; width: 100%; color: #444; }
+        
+        .todo-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .checkbox { width: 22px; height: 22px; border: 2px solid var(--accent); border-radius: 50%; flex-shrink: 0; }
+        .todo-item.done input { text-decoration: line-through; opacity: 0.5; }
+
+        /* --- STICKERS --- */
+        .sticker-panel {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: white; padding: 10px 20px; border-radius: 40px; display: flex; 
+            flex-direction: row; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1000;
+        }
+        
+        @media (min-width: 768px) {
+            .sticker-panel { left: auto; right: 30px; top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; }
+        }
+
+        .stk-tool { font-size: 1.4rem; cursor: pointer; }
+        .placed-sticker { position: absolute; font-size: 2rem; cursor: pointer; z-index: 90; pointer-events: auto; }
+
+        .save-final { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+
+    </style>
+</head>
+<body onclick="handleCanvasClick(event)">
+
+    <div id="splash-screen">
+        <div class="logo-circle">📖</div>
+        <h1 style="letter-spacing: 3px; font-weight: 300; font-size: 1.2rem;">STUDY PLANNER</h1>
+        <div class="designer-tag">Designed by Shivansh Studios</div>
+    </div>
+
+    <div id="onboarding">
+        <h2 style="font-weight: 400; text-align: center;">Welcome. What is your name?</h2>
+        <input type="text" id="user-name-input" class="name-input" placeholder="Enter name..." onkeypress="handleName(event)">
+        <button class="save-final" style="margin-top: 30px;" onclick="confirmName()">Start Planning</button>
+    </div>
+
+    <div id="home-screen">
+        <h1 class="greeting" id="display-greeting">Hello, Student</h1>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="openDateSelector()"><span>📅</span><h2>Daily Planner</h2></div>
+            <div class="menu-card" onclick="switchView('weekly')"><span>🗓️</span><h2>Weekly Planner</h2></div>
+            <div class="menu-card" onclick="switchView('notes')"><span>📝</span><h2>Notes</h2></div>
+        </div>
+        <h3 style="font-weight: 400; color: #888;">Saved History</h3>
+        <div id="saved-list" style="display: grid; gap: 10px;"></div>
+    </div>
+
+    <div id="date-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.3); display:none; align-items:center; justify-content:center; z-index:1800; padding:20px;">
+        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:300px; text-align:center;">
+            <h3>Pick a Date</h3>
+            <input type="date" id="calendar-input" style="font-family:'Outfit'; padding:10px; border:1px solid #ddd; border-radius:10px; width:100%;">
+            <br><br>
+            <button class="save-final" onclick="confirmDate()">Open</button>
+        </div>
+    </div>
+
+    <div id="planner-view">
+        <nav>
+            <div class="nav-icon" onclick="goToHome()">🏠</div>
+            <div class="nav-icon" id="nav-daily" onclick="switchView('daily')">D</div>
+            <div class="nav-icon" id="nav-weekly" onclick="switchView('weekly')">W</div>
+            <button class="save-final" onclick="saveCurrentPlan()">SAVE</button>
+        </nav>
+
+        <main>
+            <div id="daily-canvas" class="planner-canvas">
+                <div style="display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+                    <h1 style="font-weight: 400; font-size: 1.1rem; letter-spacing: 2px;">DAILY PLAN</h1>
+                    <span id="display-date" style="font-family: var(--handwriting); font-size: 1.2rem; color: var(--accent);"></span>
+                </div>
+                
+                <div class="planner-grid">
+                    <div class="section-card" style="background: #fbfbfb; border: 1px solid #eee;">
+                        <h3>Timeline</h3>
+                        <div id="timeline-list"></div>
+                        <div style="color:var(--accent); font-size:0.8rem; cursor:pointer;" onclick="addTimeSlot()">+ Add Slot</div>
+                    </div>
+                    <div>
+                        <div class="section-card mint">
+                            <h3>Focus Goals</h3>
+                            <div id="daily-goals"></div>
+                            <div style="color:var(--accent); font-size:0.8rem; cursor:pointer;" onclick="addGoal('daily-goals')">+ Add Goal</div>
+                        </div>
+                        <div class="section-card lilac"><h3>Active Recall</h3><textarea rows="4"></textarea></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="weekly-canvas" class="planner-canvas" style="display:none;">
+                <h1>Weekly Strategy</h1>
+                <div class="section-card rose">
+                    <h3>Goals</h3>
+                    <div id="weekly-goals"></div>
+                    <div style="color:var(--accent); font-size:0.8rem; cursor:pointer;" onclick="addGoal('weekly-goals')">+ Add Goal</div>
+                </div>
+                <div class="planner-grid">
+                    <div class="section-card lilac"><h3>Mon-Wed</h3><textarea rows="6"></textarea></div>
+                    <div class="section-card mint"><h3>Thu-Sun</h3><textarea rows="6"></textarea></div>
+                </div>
+            </div>
+
+            <div id="notes-canvas" class="planner-canvas" style="display:none;">
+                <h1>Notes</h1>
+                <textarea style="height: 400px;" placeholder="Write anything..."></textarea>
+            </div>
+        </main>
+
+        <div class="sticker-panel" onclick="event.stopPropagation()">
+            <div class="stk-tool" onclick="selStk('🦄', this)">🦄</div>
+            <div class="stk-tool" onclick="selStk('🌿', this)">🌿</div>
+            <div class="stk-tool" onclick="selStk('🍵', this)">🍵</div>
+            <div class="stk-tool" onclick="selStk('📌', this)">📌</div>
+            <div class="stk-tool" onclick="selStk('📖', this)">📖</div>
+            <div class="stk-tool" onclick="selStk('😎', this)">😎</div>
+            <div class="stk-tool" onclick="selStk('👑', this)">👑</div>
+            <div class="stk-tool" onclick="selStk('eraser', this)">🗑️</div>
+        </div>
+    </div>
+
+    <script>
+        let studentName = "";
+        let selectedSticker = null;
+        let selectedDate = "";
+
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('onboarding').style.display = 'flex';
+            }, 500);
+        }, 2000);
+
+        function confirmName() {
+            studentName = document.getElementById('user-name-input').value || "Student";
+            document.getElementById('display-greeting').innerText = `Hello, ${studentName}`;
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'block';
+        }
+
+        function handleName(e) { if(e.key === 'Enter') confirmName(); }
+
+        function openDateSelector() { document.getElementById('date-overlay').style.display = 'flex'; }
+
+        function confirmDate() {
+            selectedDate = document.getElementById('calendar-input').value;
+            if(!selectedDate) return alert("Select date");
+            document.getElementById('display-date').innerText = selectedDate;
+            document.getElementById('date-overlay').style.display = 'none';
+            switchView('daily');
+        }
+
+        function switchView(view) {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('planner-view').style.display = 'flex';
+            document.getElementById('daily-canvas').style.display = view === 'daily' ? 'block' : 'none';
+            document.getElementById('weekly-canvas').style.display = view === 'weekly' ? 'block' : 'none';
+            document.getElementById('notes-canvas').style.display = view === 'notes' ? 'block' : 'none';
+        }
+
+        function goToHome() {
+            document.getElementById('planner-view').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'block';
+        }
+
+        function addTimeSlot() {
+            const div = document.createElement('div');
+            div.style.display = 'flex'; div.style.marginBottom = '10px';
+            div.innerHTML = `<input type="text" style="width:50px; font-size:0.7rem; font-family:'Outfit';" value="08:00"> <input type="text" style="font-size:1.1rem" placeholder="...">`;
+            document.getElementById('timeline-list').appendChild(div);
+        }
+
+        function addGoal(id) {
+            const div = document.createElement('div');
+            div.className = 'todo-item';
+            div.innerHTML = `<div class="checkbox" onclick="this.parentElement.classList.toggle('done')"></div><input type="text" placeholder="Goal...">`;
+            document.getElementById(id).appendChild(div);
+        }
+
+        function selStk(s, el) {
+            document.querySelectorAll('.stk-tool').forEach(t => t.style.transform = 'scale(1)');
+            if(selectedSticker === s) selectedSticker = null;
+            else { selectedSticker = s; el.style.transform = 'scale(1.4)'; }
+        }
+
+        function handleCanvasClick(e) {
+            if(!selectedSticker) return;
+            if(selectedSticker === 'eraser') {
+                if(e.target.classList.contains('placed-sticker')) e.target.remove();
+                return;
+            }
+            const activeCanvas = Array.from(document.querySelectorAll('.planner-canvas')).find(c => c.style.display !== 'none');
+            const rect = activeCanvas.getBoundingClientRect();
+            const s = document.createElement('div');
+            s.className = 'placed-sticker';
+            s.innerText = selectedSticker;
+            s.style.left = (e.pageX - rect.left - 15) + 'px';
+            s.style.top = (e.pageY - rect.top - 15) + 'px';
+            activeCanvas.appendChild(s);
+        }
+
+        function saveCurrentPlan() {
+            const list = document.getElementById('saved-list');
+            const item = document.createElement('div');
+            item.style.background = 'white'; item.style.padding = '15px'; item.style.borderRadius = '15px';
+            item.innerHTML = `<strong>Plan for ${selectedDate || 'Today'}</strong>`;
+            list.appendChild(item);
+            alert("Saved!");
+            goToHome();
+        }
+
+        addTimeSlot(); addGoal('daily-goals');
+    </script>
+</body>
+</html>
